@@ -3,13 +3,14 @@
 ; scanf("%d", &m) - du langage C (version 2 octets) -
 DATA SEGMENT 
     MSG1 DB 'Veuillez entrer m : $'
-    n DB 5 DUP('$')
+    n DB 10 DUP('$')
     m DW 2 DUP(0)  
 ENDS
 STACK SEGMENT 
     DW 128 (0)
 ENDS
 CODE SEGMENT
+START:
     ; Initialisation des registres segment 
     MOV AX, DATA
     MOV DS, AX
@@ -23,8 +24,9 @@ CODE SEGMENT
     MOV AH, 0AH
     LEA DX, n
     INT 021H
+    ; Appel de la fonction compteur
+    CALL compteur
     ; Passage par pile des parametres de la fonction integer
-    MOV CX, 5
     MOV SI, 0
       passage:
         ADD SI, 1
@@ -35,14 +37,16 @@ CODE SEGMENT
     ; Appel de la fonction integer
     CALL integer
     MOV m, AX
+    PUSH AX
     ; Fin du programme 
     INT 020H
-    ; La fonction integer a pour role de formater l'entier dans la memoire
+    ; La fonction integer a pour objet de formater l'entier dans la memoire
     integer:
       PUSH BP
       MOV BP, SP
       MOV AX, 0000H
-      MOV CX, 5
+      ; Appel de la fonction compteur
+      CALL compteur
       MOV DI, 0
       tst:
         MOV SI, CX
@@ -62,5 +66,25 @@ CODE SEGMENT
       loop tst  
       MOV AX, DI
       POP BP
-      RET  
+      RET
+      ; La fonction compteur a pour objet de compter le nombre de digit du entier entree
+      compteur:
+        MOV BX, 0
+        MOV CX, 10
+        MOV SI, 0
+        count:
+          ADD SI, 1
+          MOV AL, n[SI+1]
+          CMP AL, 36
+          JE break
+          JNE cpt
+        break:
+          MOV CX, 1
+        cpt:
+          ADD BX, 1  
+        loop count
+        MOV CX, BX
+        SUB CX, 2
+        RET    
 ENDS
+END START
